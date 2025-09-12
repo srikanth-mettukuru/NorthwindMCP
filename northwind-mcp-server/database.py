@@ -21,7 +21,7 @@ def check_connection():
         print(f"Connection failed: {e}")
         return False
 
-# SCHEMA TOOLS
+# SCHEMA
 def get_tables():
     """Get list of all tables"""
     sql = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name"
@@ -29,6 +29,20 @@ def get_tables():
 
 def get_table_columns(table_name):
     """Get columns for a specific table"""
+
+    # First, validate that the table exists
+    tables_result = get_tables()
+    if not tables_result["success"]:
+        return {"success": False, "error": f"Failed to check if table exists: {tables_result['error']}"}
+    
+    # Extract table names from the result
+    existing_tables = [row[0] for row in tables_result["rows"]]
+    
+    # Check if the requested table exists
+    if table_name not in existing_tables:
+        return {"success": False, "error": "The table does not exist"}
+    
+    # If table exists, proceed with getting columns
     sql = """
     SELECT column_name, data_type, is_nullable, column_default
     FROM information_schema.columns 
@@ -38,7 +52,7 @@ def get_table_columns(table_name):
     return execute_query(sql, [table_name])
 
 
-# REPORT TOOLS
+# REPORT
 def sales_report(start_date=None, end_date=None):
     """Generate sales report"""
     sql = """
@@ -81,10 +95,46 @@ def customer_orders(customer_id=None):
 # GENERIC QUERY EXECUTION
 def execute_query(sql, params=None):
     """Execute SELECT queries only and return results"""
+
     try:
-        # Security check - only allow SELECT queries
-        if not sql.strip().upper().startswith('SELECT'):
+        sql_clean = sql.strip().upper()
+
+        # Security check 1 - only allow SELECT queries
+        if not sql_clean.startswith('SELECT'):
             return {"success": False, "error": "Only SELECT queries are allowed"}
+        
+        # Security check 2 - Block dangerous SQL keywords
+        dangerous_keywords = [
+            'DROP', 'DELETE', 'INSERT', 'UPDATE', 'CREATE', 'ALTER', 
+            'TRUNCATE', 'EXEC', 'EXECUTE', 'UNION', '--', '/*', '*/',
+            'DECLARE', 'GRANT', 'REVOKE', 'BACKUP', 'RESTORE'
+        ]
+
+        # Security check 3 - Limit query complexity (optional)
+        if sql_clean.count('SELECT') > 3:  # Limit nested SELECTs
+            return {"success": False, "error": "Query too complex - multiple SELECT statements detected"}
+        
+        # Security check 4 - Query length limit
+        if len(sql) > 5000:  # Reasonable limit for most queries
+            return {"success": False, "error": "Query too long - maximum 5000 characters"}
+        
+        # Security check 5 - Parameter validation
+        if params:
+            if len(params) > 20:  # Reasonable parameter limit
+                return {"success": False, "error": "Too many parameters - maximum 20 allowed"}
+            
+            # Check for suspicious parameter values
+            for param in params:
+                if isinstance(param, str):
+                    param_upper = param.upper()
+                    for keyword in dangerous_keywords:
+                        if keyword in param_upper:
+                            return {"success": False, "error": f"Suspicious parameter value detected"}
+        
+        for keyword in dangerous_keywords:
+            if keyword in sql_clean:
+                return {"success": False, "error": f"Forbidden keyword '{keyword}' detected"}
+            
         
         conn = get_connection()
         cursor = conn.cursor()

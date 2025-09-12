@@ -6,6 +6,11 @@ from database import (
     customer_orders, 
     execute_query
 )
+from service import query_database, get_schema_tables, get_schema_table_columns
+
+###
+# Database tests (database.py functions)
+###
 
 # Basic connection test
 def test_database_connection():
@@ -13,7 +18,7 @@ def test_database_connection():
     result = check_connection()
     assert result, "Database connection failed"
 
-# Schema tools tests
+# Schema tests
 def test_get_tables():
     """Test getting list of tables"""
     result = get_tables()
@@ -33,7 +38,13 @@ def test_get_table_columns():
     assert result["success"], f"Failed to get columns: {result.get('error', '')}"
     assert len(result["rows"]) > 0, "No columns found for customer table"
 
-# Report tools tests
+def test_get_invalid_table_columns():
+    """Test getting columns for a non-existent table"""
+    result = get_table_columns("non_existent_table")
+    assert not result["success"], "Expected failure for non-existent table"
+    assert "The table does not exist" in result["error"], "Should indicate table does not exist"
+
+# Report tests
 def test_sales_report():
     """Test sales report generation"""
     result = sales_report()
@@ -83,3 +94,46 @@ def test_execute_query_invalid_sql():
     result = execute_query("SELECT * FROM non_existent_table")
     assert not result["success"], "Invalid SQL should fail"
     assert "error" in result, "Should return error message"
+
+
+
+###
+# Service tests (service.py functions)  
+###
+
+#query tests
+def test_query_function():
+    """Test the query_database function"""
+    # Test successful query
+    result = query_database("SELECT 1 as test_column")
+    assert result["status"] == "success", f"Query function failed: {result}"
+    assert result["row_count"] == 1, "Should return 1 row"
+    assert result["rows"][0][0] == 1, "Should return value 1"
+
+def test_query_function_security():
+    """Test query_database function blocks non-SELECT queries"""
+    result = query_database("INSERT INTO customer (custid) VALUES (999)")
+    assert result["status"] == "error", "INSERT should be blocked"
+    assert "Only SELECT queries are allowed" in result["error"], "Should show security error"
+
+def test_query_function_invalid():
+    """Test query_database function with invalid SQL"""
+    result = query_database("SELECT * FROM non_existent_table")
+    assert result["status"] == "error", "Invalid SQL should return error"
+
+
+# Schema tests
+def test_schema_tables_function():
+    """Test the get_schema_tables function"""
+    result = get_schema_tables()
+    assert result["status"] == "success", f"Schema tables function failed: {result}"
+    assert "tables" in result, "Should return tables list"
+    assert result["count"] > 0, "Should find some tables"
+
+def test_schema_columns_function():
+    """Test the get_schema_columns function"""
+    result = get_schema_table_columns("customer")
+    assert result["status"] == "success", f"Schema columns function failed: {result}"
+    assert result["table"] == "customer", "Should return correct table name"
+    assert "columns" in result, "Should return columns list"
+    assert result["count"] > 0, "Should find some columns"
