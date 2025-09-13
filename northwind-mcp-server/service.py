@@ -1,4 +1,4 @@
-from database import execute_query, get_tables, get_table_columns
+from database import execute_query, get_tables, get_table_columns, sales_report, customer_orders
 import logging
 
 logger = logging.getLogger(__name__)
@@ -114,6 +114,106 @@ def get_schema_table_columns(table_name: str) -> dict:
             
     except Exception as e:
         logger.error(f"Unexpected error getting columns for {table_name}: {str(e)}")
+        return {
+            "status": "error", 
+            "error": f"Unexpected error: {str(e)}"
+        }
+
+
+def generate_sales_report(start_date: str = None, end_date: str = None) -> dict:
+    """
+    Generate a sales report with optional date filtering.
+    
+    Args:
+        start_date: Start date for filtering (YYYY-MM-DD format)
+        end_date: End date for filtering (YYYY-MM-DD format)
+        
+    Returns:
+        Dictionary with sales report data
+    """
+    try:
+        logger.info(f"Generating sales report from {start_date} to {end_date}")
+        result = sales_report(start_date, end_date)
+
+        if result["success"]:
+            # Format the report data for better presentation
+            report_data = []
+            for row in result["rows"]:
+                report_data.append({
+                    "order_id": row[0],
+                    "order_date": str(row[1]),
+                    "company_name": row[2],
+                    "total_amount": float(row[3])
+                })
+            
+            logger.info(f"Sales report generated with {len(report_data)} records")
+            return {
+                "status": "success",
+                "report_type": "sales_report",
+                "date_range": {
+                    "start_date": start_date,
+                    "end_date": end_date
+                },
+                "data": report_data,
+                "record_count": len(report_data)
+            }
+        else:
+            logger.error(f"Failed to generate sales report: {result['error']}")
+            return {
+                "status": "error",
+                "error": result["error"]
+            }
+
+    except Exception as e:
+        logger.error(f"Unexpected error generating sales report: {str(e)}")
+        return {
+            "status": "error", 
+            "error": f"Unexpected error: {str(e)}"
+        }
+
+
+def generate_customer_orders_report(customer_id: str = None) -> dict:
+    """
+    Generate a customer orders report.
+    
+    Args:
+        customer_id: Specific customer ID to filter by (optional)
+        
+    Returns:
+        Dictionary with customer orders data
+    """
+    try:
+        logger.info(f"Generating customer orders report for customer: {customer_id}")
+        result = customer_orders(customer_id)
+
+        if result["success"]:
+            # Format the report data for better presentation
+            report_data = []
+            for row in result["rows"]:
+                report_data.append({
+                    "company_name": row[0],
+                    "order_id": row[1],
+                    "order_date": str(row[2]) if row[2] else None,
+                    "order_total": float(row[3]) if row[3] else 0.0
+                })
+            
+            logger.info(f"Customer orders report generated with {len(report_data)} records")
+            return {
+                "status": "success",
+                "report_type": "customer_orders",
+                "customer_filter": customer_id,
+                "data": report_data,
+                "record_count": len(report_data)
+            }
+        else:
+            logger.error(f"Failed to generate customer orders report: {result['error']}")
+            return {
+                "status": "error",
+                "error": result["error"]
+            }
+    
+    except Exception as e:
+        logger.error(f"Unexpected error generating customer orders report: {str(e)}")
         return {
             "status": "error", 
             "error": f"Unexpected error: {str(e)}"

@@ -68,7 +68,7 @@ def sales_report(start_date=None, end_date=None):
         sql += " WHERE so.orderdate BETWEEN %s AND %s"
         params = [start_date, end_date]
     
-    sql += " GROUP BY so.orderid, so.orderdate, c.companyname ORDER BY so.orderdate DESC LIMIT 100"
+    sql += " GROUP BY so.orderid, so.orderdate, c.companyname ORDER BY so.orderdate DESC"
     
     return execute_query(sql, params)
 
@@ -87,7 +87,7 @@ def customer_orders(customer_id=None):
         sql += " WHERE CAST(c.custid AS VARCHAR) = %s"
         params = [str(customer_id)]
 
-    sql += " GROUP BY c.companyname, so.orderid, so.orderdate ORDER BY so.orderdate DESC LIMIT 50"
+    sql += " GROUP BY c.companyname, so.orderid, so.orderdate ORDER BY so.orderdate DESC"
 
     return execute_query(sql, params)
 
