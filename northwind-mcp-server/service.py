@@ -18,12 +18,22 @@ def query_database(sql: str) -> dict:
         result = execute_query(sql)
         
         if result["success"]:
-            logger.info(f"Query successful, returned {len(result['rows'])} rows")
+            # Convert rows and columns into structured data objects
+            data_objects = []
+            columns = result["columns"]
+            
+            for row in result["rows"]:
+                # Create a dictionary for each row using column names as keys
+                row_dict = {}
+                for i, column_name in enumerate(columns):
+                    row_dict[column_name] = row[i]
+                data_objects.append(row_dict)
+            
+            logger.info(f"Query successful, returned {len(data_objects)} records")
             return {
                 "status": "success",
-                "columns": result["columns"],
-                "rows": result["rows"],
-                "row_count": len(result["rows"])
+                "data": data_objects,                    
+                "row_count": len(data_objects)
             }
         else:
             logger.error(f"Query failed: {result['error']}")
