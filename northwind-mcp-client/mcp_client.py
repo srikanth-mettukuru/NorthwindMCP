@@ -1,6 +1,7 @@
 import subprocess
 import json
 import logging
+import os
 from typing import Dict, List, Any
 
 class MCPClient:
@@ -13,9 +14,12 @@ class MCPClient:
     def _send_mcp_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """Send a request to the MCP server and return the response"""
         try:
+            # Get Python executable from environment variable or use default
+            python_executable = os.getenv("MCP_SERVER_PYTHON", "python")
+            
             # Start MCP server as a subprocess
             process = subprocess.Popen(
-                ["python", self.server_path],  # run the Python script that starts the MCP server. e.g., ["python", "../northwind-mcp-server/main.py"]
+                [python_executable, self.server_path],  # Use configurable Python executable
                 stdin=subprocess.PIPE,   # create a pipe to send data to the server
                 stdout=subprocess.PIPE,  # create a pipe to receive data from the server
                 stderr=subprocess.PIPE,  # create a pipe for error messages
@@ -35,13 +39,26 @@ class MCPClient:
                 }
             }
             
-            # Send initialization and actual request
+            # Send initialization
             process.stdin.write(json.dumps(init_request) + "\n")
+            process.stdin.flush()
+            
+            # Read initialization response
+            init_response_line = process.stdout.readline()
+            
+            # Send initialized notification (required by MCP protocol)
+            initialized_notification = {
+                "jsonrpc": "2.0",
+                "method": "notifications/initialized"
+            }
+            process.stdin.write(json.dumps(initialized_notification) + "\n")
+            process.stdin.flush()
+            
+            # Now send actual request
             process.stdin.write(json.dumps(request) + "\n")
             process.stdin.flush()
             
-            # Read responses
-            init_response = process.stdout.readline()
+            # Read actual response
             actual_response = process.stdout.readline()
             
             # Clean up
