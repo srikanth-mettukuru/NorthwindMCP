@@ -138,7 +138,11 @@ def execute_query(sql, params=None):
         
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute(sql, params or ())
+        
+        if params:
+            cursor.execute(sql, params)
+        else:
+            cursor.execute(sql)
         
         columns = [desc[0] for desc in cursor.description]
         rows = cursor.fetchall()

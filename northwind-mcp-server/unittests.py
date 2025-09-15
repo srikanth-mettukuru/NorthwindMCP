@@ -99,6 +99,40 @@ def test_execute_query_invalid_sql():
     assert not result["success"], "Invalid SQL should fail"
     assert "error" in result, "Should return error message"
 
+def test_execute_query_fapsm_customer():
+    """Test the specific FAPSM query that's causing the tuple index error"""    
+    
+    # Test the exact query that's failing
+    sql = "SELECT custid, companyname FROM customer WHERE companyname LIKE '%FAPSM%'"
+    result = execute_query(sql)   
+    
+    # Basic success check
+    assert result["success"], f"FAPSM query failed: {result.get('error', '')}"
+    
+    # Check structure
+    assert "columns" in result, "Result should have columns key"
+    assert "rows" in result, "Result should have rows key"
+    
+    # Check the columns
+    columns = result["columns"]
+    assert len(columns) == 2, f"Expected 2 columns, got {len(columns)}"
+    assert columns == ["custid", "companyname"], f"Expected ['custid', 'companyname'], got {columns}"
+
+    # Check the rows
+    rows = result["rows"]
+    assert len(rows) >= 1, f"Expected at least 1 row, got {len(rows)}"
+
+    # Check each row
+    for i, row in enumerate(rows):
+        assert len(row) == 2, f"Row {i} should have 2 columns, got {len(row)}: {row}"
+        
+        custid, companyname = row
+
+        assert custid is not None, f"Customer ID should not be None in row {i}"
+        assert companyname is not None, f"Company name should not be None in row {i}"
+        assert "FAPSM" in str(companyname).upper(), f"Company name should contain FAPSM: {companyname}"   
+    
+
 
 
 ###
@@ -112,7 +146,8 @@ def test_query_function():
     result = query_database("SELECT 1 as test_column")
     assert result["status"] == "success", f"Query function failed: {result}"
     assert result["row_count"] == 1, "Should return 1 row"
-    assert result["rows"][0][0] == 1, "Should return value 1"
+    assert len(result["data"]) == 1, "Should have 1 data object"
+    assert result["data"][0]["test_column"] == 1, "Should return value 1 in test_column"
 
 def test_query_function_security():
     """Test query_database function blocks non-SELECT queries"""
@@ -124,6 +159,41 @@ def test_query_function_invalid():
     """Test query_database function with invalid SQL"""
     result = query_database("SELECT * FROM non_existent_table")
     assert result["status"] == "error", "Invalid SQL should return error"
+
+def test_query_database_fapsm_customer():
+    """Test the query_database service function with the specific FAPSM query"""
+    
+    # Test the exact query that's failing at the service layer
+    sql = "SELECT custid, companyname FROM customer WHERE companyname LIKE '%FAPSM%'"
+    result = query_database(sql)
+    
+    # Basic success check
+    assert result["status"] == "success", f"FAPSM service query failed: {result.get('error', '')}"
+    
+    # Check structure - service layer returns different format than database layer
+    assert "data" in result, "Result should have data key"
+    assert "row_count" in result, "Result should have row_count key"    
+    
+    # Check row count
+    assert result["row_count"] >= 1, f"Expected at least 1 row, got {result['row_count']}"
+    
+    # Check data structure - service layer converts to list of dictionaries
+    data = result["data"]
+    assert isinstance(data, list), "Data should be a list"
+    assert len(data) == result["row_count"], f"Data length {len(data)} should match row_count {result['row_count']}"
+    
+    # Check each data object
+    for i, customer in enumerate(data):
+        assert isinstance(customer, dict), f"Data object {i} should be a dictionary"
+        
+        # Check required fields exist (these are the column names from our SQL)
+        assert "custid" in customer, f"Customer {i} should have custid field"
+        assert "companyname" in customer, f"Customer {i} should have companyname field"
+        
+        # Check field values
+        assert customer["custid"] is not None, f"Customer {i} custid should not be None"
+        assert customer["companyname"] is not None, f"Customer {i} companyname should not be None"
+        assert "FAPSM" in str(customer["companyname"]).upper(), f"Customer {i} companyname should contain FAPSM: {customer['companyname']}"
 
 
 # Schema tests

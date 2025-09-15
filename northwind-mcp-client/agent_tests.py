@@ -21,9 +21,14 @@ def test_simple_query_execution():
     agent = NorthwindAgent()
     result = agent.ask("List the first 5 customers")    
     assert result is not None
-    
+    # Check for keywords indicating customer data - 'any' function returns True if any keyword from the list is found
+    assert any(keyword in result.lower() for keyword in ["5 customers", "five customers"]), f"Result should contain customer-related content: {result}"
+
 def test_complex_query_execution():
     """Test agent can handle complex queries"""
     agent = NorthwindAgent()
     result = agent.ask("Show me orders for customer FAPSM with their product details")
     assert result is not None
+    # Check for expected content - either successful data or meaningful "no results" message
+    expected_content = ["fapsm", "order id", "product", "quantity", "no orders found", "no results"]
+    assert any(keyword in result.lower() for keyword in expected_content), f"Result should contain relevant content: {result}"
