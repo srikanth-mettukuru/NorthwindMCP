@@ -19,8 +19,8 @@ class MCPClient:
             python_executable = os.getenv("MCP_SERVER_PYTHON", "python")
 
            # Determine the correct working directory and script name
-            server_dir = os.path.dirname(self.server_path)
-            server_script = os.path.basename(self.server_path)  # Just the filename
+            server_dir = os.path.dirname(self.server_path) # Directory of the server script, e.g., "../northwind-mcp-server"
+            server_script = os.path.basename(self.server_path)  # Just the filename, e.g., "main.py"
 
             if server_dir == "":
                 # If server_path is just a filename, use current directory
@@ -30,12 +30,12 @@ class MCPClient:
         
             # Start MCP server as a subprocess
             process = subprocess.Popen(
-                [python_executable, server_script],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                cwd=server_dir
+                [python_executable, server_script], # Use configurable Python executable along with the script that runs the MCP server
+                stdin=subprocess.PIPE, # create a pipe to send data to the server
+                stdout=subprocess.PIPE, # create a pipe to receive data from the server
+                stderr=subprocess.PIPE, # create a pipe to capture error messages
+                text=True, # data is text, not bytes
+                cwd=server_dir # change to the server directory before running the Python script
             )
         
             # Give the server a moment to start up
@@ -58,9 +58,9 @@ class MCPClient:
             
             # Initialize connection first
             init_request = {
-                "jsonrpc": "2.0",
+                "jsonrpc": "2.0", # JSON-RPC 2.0 - Standard protocol that MCP uses
                 "id": 1,
-                "method": "initialize",
+                "method": "initialize", # required first step to establish MCP connection
                 "params": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {},
@@ -72,7 +72,7 @@ class MCPClient:
             try:
                 process.stdin.write(json.dumps(init_request) + "\n")
                 process.stdin.flush()
-            except BrokenPipeError as e:
+            except BrokenPipeError as e:   # Handle broken pipe error which is common if MCP server crashes
                 # Get any error output from the server
                 try:
                     stdout_data, stderr_data = process.communicate(timeout=2)
@@ -96,7 +96,7 @@ class MCPClient:
                 self.logger.error(f"Error reading initialization response: {e}")
                 return {"status": "error", "error": f"Error reading initialization response: {e}"}
             
-            # Send initialized notification
+            # Send initialized notification (required by MCP protocol)
             initialized_notification = {
                 "jsonrpc": "2.0",
                 "method": "notifications/initialized"
@@ -146,7 +146,7 @@ class MCPClient:
                 self.logger.error(f"MCP server returned error: {error_info}")
                 return {"status": "error", "error": error_info.get("message", "Unknown error")}
             
-            # Return successful result
+            # Return successful result (JSON-RPC success responses always have "result")
             return response.get("result", {})
         
         except Exception as e:
@@ -157,8 +157,8 @@ class MCPClient:
             # Clean up process
             if process and process.poll() is None:
                 try:
-                    process.terminate()
-                    process.wait(timeout=2)
+                    process.terminate() # Gracefully terminate the server process
+                    process.wait(timeout=2) # Wait for the server process to exit
                 except subprocess.TimeoutExpired:
                     process.kill()
                 except Exception as e:
