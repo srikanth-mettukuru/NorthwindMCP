@@ -1,0 +1,19 @@
+# Streamlit
+streamlit
+
+# AI/LangChain dependencies
+langchain
+langchain-openai
+openai
+
+# HTTP requests
+requests
+
+# MCP Server dependencies (for subprocess)
+fastmcp
+
+# Database dependencies  
+psycopg2-binary
+
+# Utilities
+python-dotenv
