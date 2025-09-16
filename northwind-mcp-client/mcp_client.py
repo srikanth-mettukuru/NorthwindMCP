@@ -18,17 +18,19 @@ class MCPClient:
             # Get Python executable from environment variable or use default
             python_executable = os.getenv("MCP_SERVER_PYTHON", "python")
 
-            # Determine the correct working directory based on server path
+           # Determine the correct working directory and script name
             server_dir = os.path.dirname(self.server_path)
+            server_script = os.path.basename(self.server_path)  # Just the filename
+
             if server_dir == "":
                 # If server_path is just a filename, use current directory
                 server_dir = "."
             
-            self.logger.debug(f"Starting MCP server: {python_executable} {self.server_path} in directory {server_dir}")
+            self.logger.debug(f"Starting MCP server: {python_executable} {server_script} in directory {server_dir}")
         
             # Start MCP server as a subprocess
             process = subprocess.Popen(
-                [python_executable, self.server_path],
+                [python_executable, server_script],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
