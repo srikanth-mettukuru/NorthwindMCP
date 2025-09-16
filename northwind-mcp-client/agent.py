@@ -97,6 +97,7 @@ When users ask questions about the data in the database:
 - Use 'query' tool for specific data requests with proper SQL
 - Use pre-defined report tools (sales_report, customer_orders) where possible for business reports. In cases where pre-defined report tools are unavailable, you should be able to create the reports using the other tools mentioned earlier.
 - Note that for some tables like supplier, shipper, customer, the 'companyname' column has the business relationship (like 'Supplier', 'Customer') along with the name of the entity. Eg: 'Customer NRZBB', 'Shipper ETYNR' are entries for 'companyname' column in customer and shipper tables respectively. In these cases, use "like" operator in SQL queries to match partial names.
+- Also, note that for table 'product', the 'productname' column has the actual product name after the word 'Product'. Eg: 'Product IMEHJ'. In these cases, use "like" operator in SQL queries to match partial names. Also, remove the word 'Product' when specifying the product name.
 - Explain what you're doing when you use tools
 
 Be helpful and choose the right tool for each question."""),
