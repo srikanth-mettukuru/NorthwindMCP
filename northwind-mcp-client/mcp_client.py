@@ -16,7 +16,13 @@ class MCPClient:
         try:
             # Get Python executable from environment variable or use default
             python_executable = os.getenv("MCP_SERVER_PYTHON", "python")
-            
+
+            # Determine the correct working directory based on server path
+            server_dir = os.path.dirname(self.server_path)
+            if server_dir == "":
+                # If server_path is just a filename, use current directory
+                server_dir = "."
+        
             # Start MCP server as a subprocess
             process = subprocess.Popen(
                 [python_executable, self.server_path],  # Use configurable Python executable
@@ -24,7 +30,7 @@ class MCPClient:
                 stdout=subprocess.PIPE,  # create a pipe to receive data from the server
                 stderr=subprocess.PIPE,  # create a pipe for error messages
                 text=True,   # data is text, not bytes
-                cwd="../northwind-mcp-server"  # change to the server directory before running the Python script
+                cwd=server_dir  # change to the server directory before running the Python script
             )
             
             # Initialize connection first
