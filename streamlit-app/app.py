@@ -1,4 +1,7 @@
 import streamlit as st
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'northwind-mcp-client'))  # adds the northwind-mcp-client to Python's search path so that we can import NorthwindAgent from it
 from agent import NorthwindAgent
 import logging
 
@@ -63,22 +66,21 @@ if prompt := st.chat_input("What would you like to know about the Northwind data
 with st.sidebar:
     st.header("🔧 How It Works")
     st.write("""
-    This app acts as a **Model Context Protocol (MCP) Client** and communicates with a **MCP Server** that exposes specialized tools for the Northwind database. 
-    - Uses an AI agent (powered by GPT-4.1-mini)
+    This app uses an AI Agent that acts as a **Model Context Protocol (MCP) Client** and communicates with a **MCP Server** that exposes specialized tools for the Northwind database.
     - **MCP Server**: Provides database tools (schema, query, reports)
-    - **AI Agent**: Uses LLM + MCP Server tools to understand your questions and generate answers.
+    - **AI Agent**: Uses LLM (GPT-4.1-mini) + MCP Server tools to understand your questions and generate answers.
     """)
     
     st.divider()
     
     st.header("💡 Example Questions")
     
-    example_questions = [
-        "List the first 5 customers",
+    example_questions = [       
         "What tables are available?",
+        "What columns are in the customer table?",
+        "List the first 5 customers",
         "Show me orders for customer FAPSM", 
-        "Generate a sales report for August 2006",
-        "What columns are in the customer table?"
+        "Generate a sales report for August 2006"        
     ]
     
     for question in example_questions:
