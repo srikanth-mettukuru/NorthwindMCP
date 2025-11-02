@@ -1,6 +1,6 @@
 python-dotenv
 requests
-langchain
+langchain==0.3.26
 langchain-openai
 openai
 pytest
