@@ -1,0 +1,22 @@
+# Streamlit
+streamlit
+
+# AI/LangChain dependencies
+langchain==0.3.26
+langchain-openai
+openai
+
+# MCP Framework
+fastmcp
+
+# Database dependencies
+psycopg2-binary
+
+# HTTP requests
+requests
+
+# Utilities
+python-dotenv
+
+# Testing
+pytest
